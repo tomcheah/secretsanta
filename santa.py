@@ -1,5 +1,12 @@
 import random
 
+# Import smtplib for the actual sending function
+import smtplib
+
+# Import the email modules we'll need
+from email.mime.text import MIMEText
+
+
 """
 graph = {'A': ['B', 'C'],
         'B': ['C', 'D'],
@@ -35,10 +42,9 @@ class Person():
 def hardcode_names() -> list: 
     return ["An", "Virginia", "Tom", "Jessica", "Elle", "Vincent"]
 
-
 def hardcode_people() -> list: 
     return [
-        Person("An", "test", "Virginia"),
+      Person("An", "test", "Virginia"),
         Person("Virginia", "test", "An"),
         Person("Tom", "test", "Jessica"),
         Person("Jessica", "test", "Tom"),
@@ -86,7 +92,11 @@ def enforce_restrictions(graph: dict, name_to_person: dict) -> None:
             edges.remove(significant_other)
 
 def set_matches(graph: dict, name_to_person: dict) -> None:
-    
+    '''
+        Attempts to assign each person a receiver to gift to.
+
+        Terminates early if the algorithm fails to give everyone a match that satisfies all constraints.
+    '''
     # enforce restrictions 
     # doesn't matter if this has been called before
     enforce_restrictions(graph, name_to_person) 
@@ -109,16 +119,13 @@ def set_matches(graph: dict, name_to_person: dict) -> None:
 
         # update the graph by removing the person who got matched from everyone else's edges 
         remove_receiver_from_edges(gifter.get_name(), receiver, graph)
-        print(graph)
 
 def remove_receiver_from_edges(gifter: str, receiver: str, graph: dict) -> None:
     '''
         Updates the graph by removing the receiver from everyone but the gifter's edges
     '''
-    print(graph.keys())
     for name in graph.keys():
         if name == gifter:
-            print("This is happening")
             continue
     
         edges = graph[name]
@@ -148,7 +155,10 @@ def check_matches(people: list) -> bool:
             return False
     return True
 
-def secret_santa(people: list, names: list, name_to_person: dict) -> None:
+def secret_santa(people: list, names: list, name_to_person: dict) -> dict:
+    '''
+        Returns a graph of secret santa pairings. 
+    '''
     print("Generating matches...")
     count = 0
     while not check_matches(people):
@@ -158,8 +168,12 @@ def secret_santa(people: list, names: list, name_to_person: dict) -> None:
         enforce_restrictions(graph, name_to_person)
         set_matches(graph, name_to_person) 
         count += 1
+    return graph
 
 def print_matches(people: list) -> None:
+    '''
+        Prints gift-receiver pairings.
+    '''
     for person in people:
         print(f'{person.get_name()} is gifting to {person.get_receiver()}')
 
@@ -167,5 +181,6 @@ def attempt():
     names = hardcode_names() 
     people = hardcode_people()
     name_to_person = match_name_to_person(people)
-    secret_santa(people, names, name_to_person)
+    graph_of_matches = secret_santa(people, names, name_to_person)
+    # do some checking here lol, assertions 
     print_matches(people)
