@@ -1,20 +1,11 @@
+from secrets import secrets
 import random
-
-
 import yagmail
 
-from secrets import secrets
-
-"""
-graph = {'A': ['B', 'C'],
-        'B': ['C', 'D'],
-        'C': ['D'],
-        'D': ['C'],
-        'E': ['F'],
-        'F': ['C']}
-"""
-
 class Person():
+    '''
+        A Person object contains the name, email, restriction, wishlist, and receiver of a participant 
+    '''
     def __init__(self, name="", email="", restriction="", wishlist=""):
         self.name = name
         self.email = email
@@ -222,5 +213,56 @@ def send_emails(people: list, name_to_person: list) -> None:
                 f'Creekside Santa Bot',
             ]
             subject = "Creekside Secret Santa 2021"
-            yag.send(to=receiver.get_email(), subject=subject, contents=contents)
+            try:
+                yag.send(to=receiver.get_email(), subject=subject, contents=contents)
+            except Exception as e:
+                print(f'Exception occurred while sending email: {e}')
             print("Email sent!")
+
+
+
+'''
+    To do:
+    - Add unit tests / assertions
+    - Figure out how to read from Google Sheets
+        link: https://www.analyticsvidhya.com/blog/2020/07/read-and-update-google-spreadsheets-with-python/
+
+'''
+
+def run_secret_santa():
+    '''
+        Fetches the information from the Google Sheet.
+        Runs the matching algorithm. 
+        Runs checks on the matches.
+        Emails all the participants.
+    '''
+    print('Welcome to Secret Santa!')
+
+    # getting information from google sheets
+    print('Starting Google Sheets process')
+    names = hardcode_names() 
+    people = hardcode_people()
+    name_to_person = match_name_to_person(people)
+    print('Google Sheets process complete!')
+
+    # matching algorithm 
+    print('Starting matching process')
+    graph_of_matches = secret_santa(people, names, name_to_person)
+    print("Matching process complete!")
+
+    # check matches 
+    print("Starting checking process")
+    if not check_matches(people):
+        print("Algorithm failed to set proper matches. Please run the program again.")
+        return
+    print("Checking process complete!")
+
+    # email people 
+    print('Starting email process')
+    send_emails(people, name_to_person)
+    print("Email process complete!")
+
+    print("All steps have completed. Have a nice day!")
+
+if __name__ == '__main__':
+    run_secret_santa()
