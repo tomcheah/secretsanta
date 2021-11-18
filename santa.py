@@ -1,11 +1,9 @@
 import random
 
-# Import smtplib for the actual sending function
-import smtplib
 
-# Import the email modules we'll need
-from email.mime.text import MIMEText
+import yagmail
 
+from secrets import secrets
 
 """
 graph = {'A': ['B', 'C'],
@@ -17,10 +15,11 @@ graph = {'A': ['B', 'C'],
 """
 
 class Person():
-    def __init__(self, name="", email="", restriction=""):
+    def __init__(self, name="", email="", restriction="", wishlist=""):
         self.name = name
         self.email = email
         self.restriction = restriction
+        self.wishlist = wishlist
         self.receiver = None
 
     def get_name(self):
@@ -38,19 +37,36 @@ class Person():
     def set_receiver(self, receiver):
         self.receiver = receiver
 
+    def get_wishlist(self):
+        return self.wishlist
+
 
 def hardcode_names() -> list: 
     return ["An", "Virginia", "Tom", "Jessica", "Elle", "Vincent"]
 
 def hardcode_people() -> list: 
     return [
-      Person("An", "test", "Virginia"),
-        Person("Virginia", "test", "An"),
-        Person("Tom", "test", "Jessica"),
-        Person("Jessica", "test", "Tom"),
-        Person("Elle", "test", "Vincent"),
-        Person("Vincent", "test", "Elle"),
+      Person("An", "test", "Virginia", "test"),
+        Person("Virginia", "test", "An", "test"),
+        Person("Tom", "test", "Jessica", "test"),
+        Person("Jessica", "test", "Tom", "test"),
+        Person("Elle", "test", "Vincent", "test"),
+        Person("Vincent", "test", "Elle", "test"),
     ]
+
+def create_people() -> list:
+    listy = []
+    for i in range(100):
+        listy.append(Person(str(i), "test", f'{i}_prime'))
+        listy.append(Person(f'{i}_prime', "test", str(i)))
+    return listy
+
+def create_names() -> list:
+    listy = []
+    for i in range(100):
+        listy.append(str(i))
+        listy.append(f'{i}_prime')
+    return listy
 
 def match_name_to_person(people: list) -> dict: 
     '''
@@ -183,4 +199,28 @@ def attempt():
     name_to_person = match_name_to_person(people)
     graph_of_matches = secret_santa(people, names, name_to_person)
     # do some checking here lol, assertions 
+    # checking can happen in either graph or in in person's objects
     print_matches(people)
+
+def send_emails(people: list, name_to_person: list) -> None:
+    """
+        Sends out Secret Santa matchings via email
+    """
+    with yagmail.SMTP(secrets["email"], secrets["email_password"]) as yag:
+        for person in people:
+            print(f"Sending email to {person.get_name()}...")
+            receiver_name = person.get_receiver()
+            receiver = get_person_from_name(receiver_name, name_to_person)
+            receiver_wishlist = receiver.get_wishlist()
+            contents = [
+                f'Ho ho ho! Happy holidays, {person.get_name()}!',
+                f'I am Creekside Santa Bot and I am here today to give you a secret mission.',
+                f'Your mission is to find {receiver_name} a gift for the holidays!',
+                f'Here are some clues that might help you on your mission: {receiver_wishlist}',
+                f'Best of luck!',
+                f'Yours truly,',
+                f'Creekside Santa Bot',
+            ]
+            subject = "Creekside Secret Santa 2021"
+            yag.send(to=receiver.get_email(), subject=subject, contents=contents)
+            print("Email sent!")
