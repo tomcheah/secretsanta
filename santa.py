@@ -4,6 +4,9 @@ import gspread
 import random
 import yagmail
 
+# constants
+NUM_PEOPLE = 6
+
 # Google Sheets stuff
 def get_data_from_google_sheets(sheets_url: str) -> "list[dict]":
     '''
@@ -239,6 +242,9 @@ def run_secret_santa():
     people = create_people(sheets_data)
 
     # check people data
+    if len(people) != NUM_PEOPLE:
+        print("The number of Person objects in the people list is incorrect. Please double check the Google Sheets.")
+        return
     if not check_people_data(people):
         print("People data have not been populated correctly. Check failed.")
         return
@@ -258,6 +264,9 @@ def run_secret_santa():
         print("Algorithm failed to set proper matches. Please run the program again.")
         return
     print("Checking process complete!")
+
+    # debugging
+    print_matches(people)
 
     # email people 
     print('Starting email process...')
