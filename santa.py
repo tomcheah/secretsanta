@@ -1,6 +1,47 @@
+from oauth2client.service_account import ServiceAccountCredentials
 from secrets import secrets
+import gspread
 import random
 import yagmail
+
+# Google Sheets stuff
+def get_data_from_google_sheets(sheets_url: str) -> "list[dict]":
+    '''
+        Returns data from Google Sheets as a list of dictionaries
+
+        gspread tutorial: https://www.analyticsvidhya.com/blog/2020/07/read-and-update-google-spreadsheets-with-python/
+    '''
+    scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('secret-santa-service-account-key.json', scope)
+    client = gspread.authorize(creds)
+    google_sheet = client.open_by_url(sheets_url)
+    sheet_data = google_sheet.worksheet("Data")
+    list_of_dicts = sheet_data.get_all_records()
+    return list_of_dicts
+
+def create_people(sheets_data: "list[dict]") -> list:
+    '''
+        Returns a list of Person objects with data from sheets_data
+    '''
+    people = []
+    for item in sheets_data:
+        people.append(Person(item['Name'], item['Email'], item['SO'], item['Wishlist']))
+    return people
+
+def check_people_data(people: list) -> bool: 
+    '''
+        Checks that the list of Person objects has legitimate data
+    '''
+    for person in people: 
+        if person.get_name() is None or len(person.get_name()) <= 0:
+            return False
+        if person.get_email() is None or len(person.get_email()) <= 0:
+            return False
+        if person.get_restriction() is None or len(person.get_restriction()) <= 0:
+            return False
+        if person.get_wishlist() is None or len(person.get_wishlist()) <= 0:
+            return False
+    return True
 
 class Person():
     '''
@@ -44,20 +85,6 @@ def hardcode_people() -> list:
         Person("Elle", "test", "Vincent", "test"),
         Person("Vincent", "test", "Elle", "test"),
     ]
-
-def create_people() -> list:
-    listy = []
-    for i in range(100):
-        listy.append(Person(str(i), "test", f'{i}_prime'))
-        listy.append(Person(f'{i}_prime', "test", str(i)))
-    return listy
-
-def create_names() -> list:
-    listy = []
-    for i in range(100):
-        listy.append(str(i))
-        listy.append(f'{i}_prime')
-    return listy
 
 def match_name_to_person(people: list) -> dict: 
     '''
@@ -184,15 +211,6 @@ def print_matches(people: list) -> None:
     for person in people:
         print(f'{person.get_name()} is gifting to {person.get_receiver()}')
 
-def attempt():
-    names = hardcode_names() 
-    people = hardcode_people()
-    name_to_person = match_name_to_person(people)
-    graph_of_matches = secret_santa(people, names, name_to_person)
-    # do some checking here lol, assertions 
-    # checking can happen in either graph or in in person's objects
-    print_matches(people)
-
 def send_emails(people: list, name_to_person: list) -> None:
     """
         Sends out Secret Santa matchings via email
@@ -219,16 +237,6 @@ def send_emails(people: list, name_to_person: list) -> None:
                 print(f'Exception occurred while sending email: {e}')
             print("Email sent!")
 
-
-
-'''
-    To do:
-    - Add unit tests / assertions
-    - Figure out how to read from Google Sheets
-        link: https://www.analyticsvidhya.com/blog/2020/07/read-and-update-google-spreadsheets-with-python/
-
-'''
-
 def run_secret_santa():
     '''
         Fetches the information from the Google Sheet.
@@ -240,9 +248,16 @@ def run_secret_santa():
 
     # getting information from google sheets
     print('Starting Google Sheets process')
-    names = hardcode_names() 
-    people = hardcode_people()
+    sheets_data = get_data_from_google_sheets(secrets['gsheets_url'])
+    people = create_people(sheets_data)
+
+    # check people data
+    if not check_people_data(people):
+        print("People data have not been populated correctly. Check failed.")
+        return
+
     name_to_person = match_name_to_person(people)
+    names = list(name_to_person.keys())
     print('Google Sheets process complete!')
 
     # matching algorithm 
@@ -264,5 +279,5 @@ def run_secret_santa():
 
     print("All steps have completed. Have a nice day!")
 
-if __name__ == '__main__':
-    run_secret_santa()
+# if __name__ == '__main__':
+#     run_secret_santa()
