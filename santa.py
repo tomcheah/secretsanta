@@ -177,6 +177,18 @@ def check_matches(people: list) -> bool:
             return False
     return True
 
+def check_receivers(people: list, names: list) -> bool:
+    '''
+        Checks that everyone is a gift receiver.
+    '''
+    list_of_names = names.copy()
+    for person in people:
+        list_of_names.remove(person.get_receiver())
+    
+    if len(list_of_names) != 0:
+        return False
+    return True
+
 def secret_santa(people: list, names: list, name_to_person: dict) -> dict:
     '''
         Returns a graph of secret santa pairings. 
@@ -263,10 +275,13 @@ def run_secret_santa():
     if not check_matches(people):
         print("Algorithm failed to set proper matches. Please run the program again.")
         return
+    if not check_receivers(people, names):
+        print("Not everyone was set as a receiver properly.")
+        return
     print("Checking process complete!")
 
-    # debugging
-    print_matches(people)
+    # uncomment if debugging only
+    # print_matches(people)
 
     # email people 
     print('Starting email process...')
