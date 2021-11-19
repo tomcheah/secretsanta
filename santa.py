@@ -43,6 +43,7 @@ def check_people_data(people: list) -> bool:
             return False
     return True
 
+# Matching algorithm stuff 
 class Person():
     '''
         A Person object contains the name, email, restriction, wishlist, and receiver of a participant 
@@ -71,20 +72,6 @@ class Person():
 
     def get_wishlist(self):
         return self.wishlist
-
-
-def hardcode_names() -> list: 
-    return ["An", "Virginia", "Tom", "Jessica", "Elle", "Vincent"]
-
-def hardcode_people() -> list: 
-    return [
-      Person("An", "test", "Virginia", "test"),
-        Person("Virginia", "test", "An", "test"),
-        Person("Tom", "test", "Jessica", "test"),
-        Person("Jessica", "test", "Tom", "test"),
-        Person("Elle", "test", "Vincent", "test"),
-        Person("Vincent", "test", "Elle", "test"),
-    ]
 
 def match_name_to_person(people: list) -> dict: 
     '''
@@ -131,12 +118,10 @@ def set_matches(graph: dict, name_to_person: dict) -> None:
 
         Terminates early if the algorithm fails to give everyone a match that satisfies all constraints.
     '''
-    # enforce restrictions 
-    # doesn't matter if this has been called before
+    # enforce restrictions, doesn't matter if this has been called before
     enforce_restrictions(graph, name_to_person) 
 
     for name in graph.keys():
-        print(graph)
         edges = graph[name]
 
         # if a person doesn't have anyone to gift to, terminate early
@@ -197,7 +182,7 @@ def secret_santa(people: list, names: list, name_to_person: dict) -> dict:
     count = 0
     while not check_matches(people):
         reset_matches(people)
-        print(f'Attempt #{count}')
+        print(f'Matching Algorithm Attempt #{count}')
         graph = generate_starting_graph(names)
         enforce_restrictions(graph, name_to_person)
         set_matches(graph, name_to_person) 
@@ -206,11 +191,12 @@ def secret_santa(people: list, names: list, name_to_person: dict) -> dict:
 
 def print_matches(people: list) -> None:
     '''
-        Prints gift-receiver pairings.
+        Prints gift-receiver pairings. Used for debugging purposes only.
     '''
     for person in people:
         print(f'{person.get_name()} is gifting to {person.get_receiver()}')
 
+# Email stuff
 def send_emails(people: list, name_to_person: list) -> None:
     """
         Sends out Secret Santa matchings via email
@@ -235,6 +221,7 @@ def send_emails(people: list, name_to_person: list) -> None:
                 yag.send(to=receiver.get_email(), subject=subject, contents=contents)
             except Exception as e:
                 print(f'Exception occurred while sending email: {e}')
+                return
             print("Email sent!")
 
 def run_secret_santa():
@@ -247,7 +234,7 @@ def run_secret_santa():
     print('Welcome to Secret Santa!')
 
     # getting information from google sheets
-    print('Starting Google Sheets process')
+    print('Starting Google Sheets process...')
     sheets_data = get_data_from_google_sheets(secrets['gsheets_url'])
     people = create_people(sheets_data)
 
@@ -261,23 +248,24 @@ def run_secret_santa():
     print('Google Sheets process complete!')
 
     # matching algorithm 
-    print('Starting matching process')
+    print('Starting matching process...')
     graph_of_matches = secret_santa(people, names, name_to_person)
     print("Matching process complete!")
 
     # check matches 
-    print("Starting checking process")
+    print("Starting checking process...")
     if not check_matches(people):
         print("Algorithm failed to set proper matches. Please run the program again.")
         return
     print("Checking process complete!")
 
     # email people 
-    print('Starting email process')
+    print('Starting email process...')
     send_emails(people, name_to_person)
     print("Email process complete!")
 
     print("All steps have completed. Have a nice day!")
 
-# if __name__ == '__main__':
-#     run_secret_santa()
+if __name__ == '__main__':
+    run_secret_santa()
+
