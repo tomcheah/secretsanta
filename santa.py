@@ -233,7 +233,7 @@ def send_emails(people: list, name_to_person: list) -> None:
             ]
             subject = "Creekside Secret Santa 2021"
             try:
-                yag.send(to=receiver.get_email(), subject=subject, contents=contents)
+                yag.send(to=person.get_email(), subject=subject, contents=contents)
             except Exception as e:
                 print(f'Exception occurred while sending email: {e}. Email address was: {receiver.get_email()}')
                 return
